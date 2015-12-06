@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>  
+<beans xmlns="http://www.springframework.org/schema/beans"  
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  
+         xmlns:aop="http://www.springframework.org/schema/aop"  
+         xmlns:tx="http://www.springframework.org/schema/tx"  
+          xmlns:mvc="http://www.springframework.org/schema/mvc"  
+          xmlns:context="http://www.springframework.org/schema/context"
+         xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd  
+           http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd  
+           http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+           http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd" >  
+     <context:property-placeholder location="classpath:mybatis/jdbc.properties"/>
+     <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+		 <property name="driverClassName" value="${jdbc.driverClassName}" />
+		 <property name="url" value="${jdbc.url}" />
+		 <property name="username" value="${jdbc.username}" />
+		 <property name="password" value="${jdbc.password}" />
+	</bean>  
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+	  <property name="configLocation" value="classpath:mybatis/MyBatisConf.xml"/>
+	  <property name="dataSource" ref="dataSource" />
+	</bean>
+	<bean id="sessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+	    <constructor-arg index="0" ref="sqlSessionFactory" />
+	</bean>
+	<bean class="com.base.dao.BaseDao" id="baseDao">
+		<property name="sessionTemplate" ref="sessionTemplate" />
+	</bean>
+	<bean class="com.base.dao.BaseDaoHelper" id="baseDaoHelper">
+		<property name="sessionTemplate" ref="sessionTemplate" />
+	</bean>
+	<bean class="com.base.dao.QueryDataDao" id="queryDataDao">
+	</bean>
+	<bean class="com.base.dao.UpdateDataDao" id="updateDataDao">
+	</bean>
+	<bean class="com.base.dao.InsertDataDao" id="insertDataDao">
+	</bean>
+	<bean class="com.base.dao.DeleteDataDao" id="deleteDataDao">
+	</bean>
+	<bean class="com.base.dao.BaseDataSetDao" id="baseDataSetDao">
+		<property name="queryDataDao" ref="queryDataDao" />
+		<property name="updateDataDao" ref="updateDataDao" />
+		<property name="insertDataDao" ref="insertDataDao" />
+		<property name="deleteDataDao" ref="deleteDataDao" />
+	</bean>
+	<bean class="com.house.dao.SysUserDaoImpl" id="sysUserDaoImpl">
+		<property name="baseDataSetDao" ref="baseDataSetDao" />
+	</bean>
+
+	<bean id="sysUserSerivce" class="com.house.service.SysUserService">
+		<property name="sysUserDao" ref="sysUserDaoImpl" />
+	</bean>
+	
+	<bean id="sleepHelper" class="com.base.entity.SleepHelper">
+  </bean>
+  <bean id="sleepAdvisor" class="org.springframework.aop.support.RegexpMethodPointcutAdvisor">
+    <property name="advice" ref="sleepHelper"/>
+    <property name="pattern" value=".*sleep"/>
+  </bean>
+  <bean id="human" class="com.base.entity.Human">
+  </bean>
+  <bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"/>
+	
+    <bean id="loginController" class="com.house.controller.LoginController">  
+    <!-- 注意这里的两个属性，对应的是两个需要跳转的页面，一个是显示用户，一个是登录失败还是登录界面 -->  
+        <!-- <property name="successView" value="showUser"></property>  
+        <property name="failView" value="login"></property>   -->
+        <property name="sysUserSerivce" ref="sysUserSerivce"></property>  
+         <property name="human" ref="human"></property>  
+    </bean>  
+     <bean id="toLoginController" class="com.house.controller.ToLoginController">
+     
+     </bean>
+     
+    <bean id="urlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">  
+        <property name="mappings">  
+            <props>  
+                <prop key="/login.do">loginController</prop>  
+                   <prop key="/toLogin.do">toLoginController</prop>  
+            </props>  
+        </property>  
+    </bean>  
+    
+    <bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">  
+        <property name="prefix" value="/"></property>  
+        <property name="suffix" value=".jsp"></property>  
+    </bean>  
+<!-- 拦截器配置 -->
+	<mvc:interceptors>
+		<!-- 配置Token拦截器，防止用户重复提交数据 -->
+		<mvc:interceptor>
+			<mvc:mapping path="/**" />
+			<bean class="com.base.entity.TokenInterceptor" />
+		</mvc:interceptor>
+	</mvc:interceptors>     
+</beans>  

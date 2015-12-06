@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.base">
+<select id="baseSelect" parameterType="map" resultType="hashmap"  >
+${sql}
+</select>
+<insert id="baseInsert"  >
+${sql}
+</insert>
+<insert id="baseUpdate"  >
+${sql}
+</insert>
+<delete id="baseDelete"  >
+${sql}
+</delete>
+</mapper>
